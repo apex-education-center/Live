@@ -384,6 +384,13 @@
         }
 
         function selectChannel(channel) {
+            // 1. Handle External Redirects
+            if (channel.is_external) {
+                window.open(channel.url, '_blank');
+                return;
+            }
+
+            // 2. Handle Internal HLS Playback
             document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
             const selectedEl = document.getElementById(`chan-${channel.id}`);
             if(selectedEl) {
