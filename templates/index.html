@@ -172,6 +172,12 @@
             text-overflow: ellipsis;
         }
 
+        .channel-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -248,6 +254,12 @@
             0% { opacity: 1; }
             50% { opacity: 0.4; }
             100% { opacity: 1; }
+        }
+
+        .external-badge {
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-left: 6px;
         }
 
         /* Mobile Responsiveness */
@@ -335,6 +347,7 @@
         const video = document.getElementById('videoPlayer');
         let hlsInstance = null;
         let allChannels = [];
+        let currentChannel = null;
 
         async function loadChannels() {
             try {
@@ -373,9 +386,12 @@
                     item.className = 'channel-item';
                     item.id = `chan-${chan.id}`;
                     item.onclick = () => selectChannel(chan);
+                    
+                    const externalBadge = chan.is_external ? '<span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>' : '';
+                    
                     item.innerHTML = `
                         <div class="channel-avatar">${chan.name.substring(0,2)}</div>
-                        <div class="channel-info"><h4>${chan.name}</h4></div>
+                        <div class="channel-info"><h4>${chan.name}${externalBadge}</h4></div>
                     `;
                     sect.appendChild(item);
                 });
@@ -384,13 +400,9 @@
         }
 
         function selectChannel(channel) {
-            // 1. Handle External Redirects
-            if (channel.is_external) {
-                window.open(channel.url, '_blank');
-                return;
-            }
-
-            // 2. Handle Internal HLS Playback
+            currentChannel = channel;
+            
+            // Mark as active in sidebar
             document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
             const selectedEl = document.getElementById(`chan-${channel.id}`);
             if(selectedEl) {
@@ -400,6 +412,25 @@
 
             document.getElementById('currentChannelTitle').innerText = channel.name;
             document.getElementById('currentChannelCategory').innerText = channel.category;
+
+            // 1. Handle External Links - Only open on play, not on select
+            if (channel.is_external) {
+                // Show placeholder or message
+                video.src = '';
+                document.getElementById('currentChannelCategory').innerText = 'Click play to open in new window →';
+                return;
+            }
+
+            // 2. Handle Internal HLS Playback
+            playStream(channel);
+        }
+
+        function playStream(channel) {
+            // If external, open in new window
+            if (channel.is_external) {
+                window.open(channel.url, '_blank');
+                return;
+            }
 
             let proxyUrl = `/proxy?url=${encodeURIComponent(channel.url)}`;
             if(channel.referer) {
@@ -426,6 +457,14 @@
                 });
             }
         }
+
+        // Override video play to handle external links
+        video.addEventListener('play', (e) => {
+            if (currentChannel && currentChannel.is_external) {
+                e.preventDefault();
+                playStream(currentChannel);
+            }
+        });
 
         document.getElementById('searchChannels').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
