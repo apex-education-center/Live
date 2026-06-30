@@ -138,7 +138,7 @@ def build_channel_list():
             "id": "mtv_link",
             "name": "MTV Lebanon (Watch Official)",
             "category": "External Links",
-            "url": "https://www.mtv.com.lb/live",
+            "url": "https://www.mtv.com.lb/vod/ar/live",
             "is_external": True
         },
         {
