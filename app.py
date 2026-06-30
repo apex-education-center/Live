@@ -135,10 +135,11 @@ def fetch_community_stream(channel_keyword, country_code="lb"):
 def build_channel_list():
     channels = [
         {
-            "id": "mtv",
-            "name": "MTV Lebanon",
-            "category": "Lebanon",
-            "url": get_authenticated_stream() or FALLBACKS["mtv"]
+            "id": "mtv_link",
+            "name": "MTV Lebanon (Watch Official)",
+            "category": "External Links",
+            "url": "https://www.mtv.com.lb/live",
+            "is_external": True
         },
         {
             "id": "otv",
@@ -153,10 +154,11 @@ def build_channel_list():
             "url": fetch_community_stream("manar", "lb") or FALLBACKS["almanar"]
         },
         {
-            "id": "teleliban",
-            "name": "Tele Liban",
-            "category": "Lebanon",
-            "url": FALLBACKS["tele"] or fetch_community_stream("tele liban", "lb")
+            "id": "tele_link",
+            "name": "Tele Liban (Watch Official)",
+            "category": "External Links",
+            "url": "https://teleliban.com.lb/Live",
+            "is_external": True
         },
         {
             "id": "future_tv",
