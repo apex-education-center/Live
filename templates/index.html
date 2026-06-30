@@ -413,11 +413,10 @@
             document.getElementById('currentChannelTitle').innerText = channel.name;
             document.getElementById('currentChannelCategory').innerText = channel.category;
 
-            // 1. Handle External Links - Only open on play, not on select
+            // 1. Handle External Links - Open immediately in new window
             if (channel.is_external) {
-                // Show placeholder or message
+                window.open(channel.url, '_blank');
                 video.src = '';
-                document.getElementById('currentChannelCategory').innerText = 'Click play to open in new window →';
                 return;
             }
 
@@ -457,14 +456,6 @@
                 });
             }
         }
-
-        // Override video play to handle external links
-        video.addEventListener('play', (e) => {
-            if (currentChannel && currentChannel.is_external) {
-                e.preventDefault();
-                playStream(currentChannel);
-            }
-        });
 
         document.getElementById('searchChannels').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
