@@ -23,20 +23,18 @@ XTREAM_PASSWORD = "your_password"
 # Persistent sessions
 otv_session = requests.Session()
 
-# 2026 Verified High-Availability Fallbacks
+# Verified Fallbacks (Restored to original working links for MTV & Tele Liban)
 FALLBACKS = {
-    "mtv": "https://hms.pfs.gdn/v1/broadcast/mtv/playlist.m3u8",
+    "mtv": "https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mtv-lebanon/b8ebb2a5affb812f1541712adde10e26/index.m3u8",
     "mtv_alt": "https://live.3cd.io/v1/broadcast/mtv/playlist.m3u8",
     "otv": "https://otv.hibridcdn.net/otv/tv_abr/playlist.m3u8",
-    "tele": "https://svs.itworkscdn.net/telelibanlive/livestream/playlist.m3u8",
-    "aljadeed": "http://185.9.2.18/chid_391/mono.m3u8",
+    "tele": "https://cdn.catiacast.video/abr/ed8f807e2548db4507d2a6f4ba0c4a06/playlist.m3u8",
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
     "aljazeera_arabic": "https://live-hls-web-aja.getaj.net/AJA/index.m3u8",
     "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
     "noursat": "https://cllive.itworkscdn.net/noursat/live.smil/playlist.m3u8",
-    "mariam": "https://cllive.itworkscdn.net/mariamtv/live.smil/playlist.m3u8",
     "future": "https://futuretv.b-cdn.net/live/stream/playlist.m3u8",
     "almayadeen": "https://live.almayadeen.net/live/smil:almayadeen.smil/playlist.m3u8",
     "bloomberg": "https://bloomberg.com/media-manifest/streams/us.m3u8",
@@ -62,7 +60,7 @@ def get_authenticated_stream():
         captured_url = None
         def handle_response(response):
             nonlocal captured_url
-            if ".m3u8" in response.url and "edgenextcdn" not in response.url and ("bitmovin" in response.url or "pfs.gdn" in response.url or "broadcast" in response.url):
+            if ".m3u8" in response.url and ("bitmovin" in response.url or "pfs.gdn" in response.url or "broadcast" in response.url or "edgenextcdn" in response.url):
                 captured_url = response.url
 
         page.on("response", handle_response)
@@ -128,8 +126,6 @@ def fetch_community_stream(channel_keyword, country_code="lb"):
 
                     if i + 1 < len(lines):
                         stream_url = lines[i+1].strip()
-                        if "edgenextcdn.net" in stream_url:
-                            continue
                         if stream_url.startswith("http"):
                             return stream_url
     except Exception:
@@ -142,19 +138,13 @@ def build_channel_list():
             "id": "mtv",
             "name": "MTV Lebanon",
             "category": "Lebanon",
-            "url": FALLBACKS["mtv"] or fetch_xtream_stream("12345") or get_authenticated_stream() or FALLBACKS["mtv_alt"]
+            "url": fetch_xtream_stream("12345") or FALLBACKS["mtv"] or get_authenticated_stream() or FALLBACKS["mtv_alt"]
         },
         {
             "id": "otv",
             "name": "OTV Lebanon",
             "category": "Lebanon",
             "url": fetch_xtream_stream("11223") or extract_authenticated_otv_stream()
-        },
-        {
-            "id": "al_jadeed",
-            "name": "Al Jadeed",
-            "category": "Lebanon",
-            "url": fetch_community_stream("jadeed", "lb") or FALLBACKS["aljadeed"]
         },
         {
             "id": "al_manar",
@@ -179,12 +169,6 @@ def build_channel_list():
             "name": "Noursat",
             "category": "Lebanon (Religious)",
             "url": fetch_community_stream("noursat", "lb") or FALLBACKS["noursat"]
-        },
-        {
-            "id": "mariam_tv",
-            "name": "Mariam TV",
-            "category": "Lebanon (Cultural)",
-            "url": fetch_community_stream("mariam", "lb") or FALLBACKS["mariam"]
         },
         {
             "id": "al_mayadeen",
@@ -238,12 +222,10 @@ def build_fallback_only_list():
     return [
         {"id": "mtv", "name": "MTV Lebanon", "category": "Lebanon", "url": FALLBACKS["mtv"]},
         {"id": "otv", "name": "OTV Lebanon", "category": "Lebanon", "url": FALLBACKS["otv"]},
-        {"id": "al_jadeed", "name": "Al Jadeed", "category": "Lebanon", "url": FALLBACKS["aljadeed"]},
         {"id": "al_manar", "name": "Al Manar", "category": "Lebanon", "url": FALLBACKS["almanar"]},
         {"id": "teleliban", "name": "Tele Liban", "category": "Lebanon", "url": FALLBACKS["tele"]},
         {"id": "future_tv", "name": "Future TV", "category": "Lebanon", "url": FALLBACKS["future"]},
         {"id": "noursat", "name": "Noursat", "category": "Lebanon (Religious)", "url": FALLBACKS["noursat"]},
-        {"id": "mariam_tv", "name": "Mariam TV", "category": "Lebanon (Cultural)", "url": FALLBACKS["mariam"]},
         {"id": "al_mayadeen", "name": "Al Mayadeen", "category": "News", "url": FALLBACKS["almayadeen"]},
         {"id": "alarabiya", "name": "Al Arabiya", "category": "News", "url": FALLBACKS["alarabiya"], "referer": FALLBACKS["alarabiya_referer"]},
         {"id": "aljazeera_arabic", "name": "Al Jazeera Arabic", "category": "News", "url": FALLBACKS["aljazeera_arabic"]},
