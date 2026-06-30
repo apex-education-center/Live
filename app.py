@@ -28,18 +28,18 @@ otv_session = requests.Session()
 
 # 2026 Verified High-Availability Fallbacks for Lebanese & Public Channels
 FALLBACKS = {
-    "mtv": "https://hms.pfs.gdn/v1/broadcast/mtv/playlist.m3u8",
+    "mtv": "https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mtv-lebanon/b8ebb2a5affb812f1541712adde10e26/index.m3u8",
     "mtv_alt": "https://live.3cd.io/v1/broadcast/mtv/playlist.m3u8",
     "lbci": "https://mhd.itworkscdn.net/lbclive/lbc/playlist.m3u8",
     "otv": "https://otv.hibridcdn.net/otv/tv_abr/playlist.m3u8",
-    "tele": "https://teleliban.b-cdn.net/live/stream/playlist.m3u8",
+    "tele": "https://cdn.catiacast.video/abr/ed8f807e2548db4507d2a6f4ba0c4a06/playlist.m3u8",
     "aljadeed": "http://185.9.2.18/chid_391/mono.m3u8",
     "nbn": "https://nbntv.me:8443/nbntv/index.m3u8",
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
     "natgeo": "https://YOUR_IPTV_PROVIDER.com/natgeo.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
-    "aljazeera": "https://live-hls-apps-aja-v3-fa.getaj.net/AJA/index.m3u8",
+    "aljazeera": "https://live-hls-web-aje.getaj.net/AJE/index.m3u8",
     "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
     "noursat": "https://cllive.itworkscdn.net/noursat/live.smil/playlist.m3u8",
     "mariam": "https://cllive.itworkscdn.net/mariamtv/live.smil/playlist.m3u8",
@@ -183,7 +183,7 @@ def build_channel_list():
             "name": "MTV Lebanon (TV)",
             "category": "Lebanon",
             "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-            "url": fetch_xtream_stream("12345") or get_authenticated_stream() or fetch_community_stream("mtv lebanon", "lb") or FALLBACKS["mtv"] or FALLBACKS["mtv_alt"]
+            "url": fetch_xtream_stream("12345") or FALLBACKS["mtv"] or get_authenticated_stream() or FALLBACKS["mtv_alt"]
         },
         {
             "id": "lbci",
@@ -225,7 +225,7 @@ def build_channel_list():
             "name": "Tele Liban",
             "category": "Lebanon",
             "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-            "url": fetch_community_stream("tele", "lb") or FALLBACKS["tele"]
+            "url": FALLBACKS["tele"] or fetch_community_stream("tele liban", "lb")
         },
         {
             "id": "future_tv",
@@ -268,7 +268,7 @@ def build_channel_list():
             "name": "Al Jazeera",
             "category": "News",
             "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-            "url": fetch_community_stream("jazeera", "qa") or FALLBACKS["aljazeera"]
+            "url": FALLBACKS["aljazeera"]
         },
         {
             "id": "cnbc",
