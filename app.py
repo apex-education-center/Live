@@ -277,12 +277,21 @@ def force_refresh():
 @app.route('/proxy')
 def stream_proxy():
     target_url = request.args.get('url')
-    referer_header = request.args.get('referer')
-    if "mtv" in target_url:
-        referer_header = "https://www.mtv.com.lb/"
-    else:
-        referer_header = request.args.get('referer', 'https://www.google.com/')
+    
+    # 1. Basic Validation
+    if not target_url or target_url.startswith("https://YOUR_IPTV_PROVIDER"):
+        return "Stream URL not configured or dead", 400
 
+    # 2. Determine Referer
+    # Use the passed referer or default to the domain of the target URL
+    referer_header = request.args.get('referer')
+    if not referer_header:
+        if "mtv" in target_url:
+            referer_header = "https://www.mtv.com.lb/"
+        else:
+            referer_header = '/'.join(target_url.split('/')[:3]) + '/'
+
+    # 3. Define Headers
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': referer_header,
@@ -290,29 +299,14 @@ def stream_proxy():
     }
 
     try:
-        # We must use verify=False if there are SSL issues, 
-        # but the headers are the most critical part here.
+        # 4. Perform the Request
         req = requests.get(target_url, headers=headers, stream=True, verify=False, timeout=10)
-
-    if not target_url or target_url.startswith("https://YOUR_IPTV_PROVIDER"):
-        return "Stream URL not configured or dead", 400
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
-
-    if referer_header:
-        headers['Referer'] = referer_header
-    else:
-        headers['Referer'] = '/'.join(target_url.split('/')[:3]) + '/'
-
-    try:
-        req = requests.get(target_url, headers=headers, stream=True, verify=False, timeout=10)
-
+        
         exclude_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
         response_headers = [(name, value) for name, value in req.headers.items() if name.lower() not in exclude_headers]
         response_headers.append(('Access-Control-Allow-Origin', '*'))
 
+        # 5. Handle M3U8 Playlist Rewriting
         if '.m3u8' in target_url or 'playlist' in target_url:
             content = req.text
             base_url = target_url.rsplit('/', 1)[0]
@@ -331,14 +325,10 @@ def stream_proxy():
                     else:
                         absolute_url = base_url + '/' + stripped
 
-                    param_url = f"/proxy?url={urllib.parse.quote_plus(absolute_url)}"
-                    if referer_header:
-                        param_url += f"&referer={urllib.parse.quote_plus(referer_header)}"
+                    param_url = f"/proxy?url={urllib.parse.quote_plus(absolute_url)}&referer={urllib.parse.quote_plus(referer_header)}"
                     rewritten_lines.append(param_url)
                 elif stripped.startswith('http') and not stripped.startswith('/proxy'):
-                    param_url = f"/proxy?url={urllib.parse.quote_plus(stripped)}"
-                    if referer_header:
-                        param_url += f"&referer={urllib.parse.quote_plus(referer_header)}"
+                    param_url = f"/proxy?url={urllib.parse.quote_plus(stripped)}&referer={urllib.parse.quote_plus(referer_header)}"
                     rewritten_lines.append(param_url)
                 else:
                     rewritten_lines.append(line)
@@ -346,6 +336,7 @@ def stream_proxy():
             rewritten_content = '\n'.join(rewritten_lines)
             return Response(rewritten_content, status=req.status_code, headers=response_headers, content_type='application/vnd.apple.mpegurl')
 
+        # 6. Handle Video Segments (TS files)
         def generate():
             for chunk in req.iter_content(chunk_size=32768):
                 yield chunk
