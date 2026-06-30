@@ -278,6 +278,21 @@ def force_refresh():
 def stream_proxy():
     target_url = request.args.get('url')
     referer_header = request.args.get('referer')
+    if "mtv" in target_url:
+        referer_header = "https://www.mtv.com.lb/"
+    else:
+        referer_header = request.args.get('referer', 'https://www.google.com/')
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': referer_header,
+        'Origin': '/'.join(referer_header.split('/')[:3])
+    }
+
+    try:
+        # We must use verify=False if there are SSL issues, 
+        # but the headers are the most critical part here.
+        req = requests.get(target_url, headers=headers, stream=True, verify=False, timeout=10)
 
     if not target_url or target_url.startswith("https://YOUR_IPTV_PROVIDER"):
         return "Stream URL not configured or dead", 400
