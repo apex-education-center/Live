@@ -1,9 +1,5 @@
 services:
   - type: web
     name: my-live-app
-    env: python
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install chromium && python -m playwright install-deps"
-    startCommand: "gunicorn app:app"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.9
+    env: docker
+    dockerfilePath: ./Dockerfile
