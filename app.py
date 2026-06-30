@@ -15,9 +15,6 @@ app = Flask(__name__, template_folder='templates')
 
 # =========================================================================
 # AUTHORIZED XTREAM CODES CREDENTIALS
-# If you have a paid or authorized IPTV subscription, insert your login
-# details here. The backend will use standard API handshakes to fetch
-# your dynamic, authorized stream tokens.
 # =========================================================================
 XTREAM_SERVER = "http://your-iptv-provider-domain.com:8080"
 XTREAM_USERNAME = "your_username"
@@ -26,45 +23,34 @@ XTREAM_PASSWORD = "your_password"
 # Persistent sessions
 otv_session = requests.Session()
 
-# 2026 Verified High-Availability Fallbacks for Lebanese & Public Channels
+# 2026 Verified High-Availability Fallbacks
 FALLBACKS = {
-    "mtv": "https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mtv-lebanon/b8ebb2a5affb812f1541712adde10e26/index.m3u8",
+    "mtv": "https://hms.pfs.gdn/v1/broadcast/mtv/playlist.m3u8",
     "mtv_alt": "https://live.3cd.io/v1/broadcast/mtv/playlist.m3u8",
-    "lbci": "https://mhd.itworkscdn.net/lbclive/lbc/playlist.m3u8",
     "otv": "https://otv.hibridcdn.net/otv/tv_abr/playlist.m3u8",
-    "tele": "https://cdn.catiacast.video/abr/ed8f807e2548db4507d2a6f4ba0c4a06/playlist.m3u8",
+    "tele": "https://svs.itworkscdn.net/telelibanlive/livestream/playlist.m3u8",
     "aljadeed": "http://185.9.2.18/chid_391/mono.m3u8",
-    "nbn": "https://nbntv.me:8443/nbntv/index.m3u8",
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
-    "natgeo": "https://YOUR_IPTV_PROVIDER.com/natgeo.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
-    "aljazeera": "https://live-hls-web-aje.getaj.net/AJE/index.m3u8",
+    "aljazeera_arabic": "https://live-hls-web-aja.getaj.net/AJA/index.m3u8",
     "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
     "noursat": "https://cllive.itworkscdn.net/noursat/live.smil/playlist.m3u8",
     "mariam": "https://cllive.itworkscdn.net/mariamtv/live.smil/playlist.m3u8",
     "future": "https://futuretv.b-cdn.net/live/stream/playlist.m3u8",
     "almayadeen": "https://live.almayadeen.net/live/smil:almayadeen.smil/playlist.m3u8",
     "bloomberg": "https://bloomberg.com/media-manifest/streams/us.m3u8",
-    "france24": "https://live.france24.com/hls/live/2037218-b/F24_EN_HI_HLS/master_5000.m3u8",
-    "abcnews": "https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8"
+    "france24": "https://live.france24.com/hls/live/2037218-b/F24_EN_HI_HLS/master_5000.m3u8"
 }
 
 def fetch_xtream_stream(stream_id):
-    """
-    Standard protocol to fetch authenticated stream URLs from an Xtream Codes server.
-    This resolves dynamic CDN tokens securely using authorized user credentials.
-    """
     if not XTREAM_USERNAME or XTREAM_USERNAME == "your_username":
         return None
     return f"{XTREAM_SERVER}/live/{XTREAM_USERNAME}/{XTREAM_PASSWORD}/{stream_id}.m3u8"
 
-
-# Simple cache to avoid re-logging in every time
 stream_cache = {"url": None, "timestamp": 0}
 
 def get_authenticated_stream():
-    # Return from cache if less than 1 hour old
     if stream_cache["url"] and (time.time() - stream_cache["timestamp"] < 3600):
         return stream_cache["url"]
 
@@ -76,18 +62,14 @@ def get_authenticated_stream():
         captured_url = None
         def handle_response(response):
             nonlocal captured_url
-            # Filter out blacklisted/expired CDNs completely
             if ".m3u8" in response.url and "edgenextcdn" not in response.url and ("bitmovin" in response.url or "pfs.gdn" in response.url or "broadcast" in response.url):
                 captured_url = response.url
 
         page.on("response", handle_response)
 
         try:
-            # Drop valid base cookies first
             page.goto("https://www.mtv.com.lb", timeout=30000)
             page.wait_for_timeout(2000)
-
-            # Load streaming manifest
             page.goto("https://www.mtv.com.lb/live", timeout=60000)
             page.wait_for_timeout(7000)
         except Exception as e:
@@ -101,17 +83,12 @@ def get_authenticated_stream():
         return captured_url
 
 def extract_authenticated_otv_stream():
-    """
-    Automated headless bot to log into OTV's free system,
-    extract the session token, and return the direct raw video stream.
-    """
     payload = {
         'email': 'tvlivechannel9@gmail.com',
         'password': 'tvlivechannel12345'
     }
 
     if payload['email'] == 'tvlivechannel9@gmail.com':
-        print("[OTV Scraper] Using public fallback. Insert valid credentials to enable automated login bypass.")
         return FALLBACKS["otv"]
 
     login_page_url = "https://otv.com.lb/login"
@@ -121,7 +98,6 @@ def extract_authenticated_otv_stream():
     }
 
     try:
-        # Get dynamic CSRF validation token
         get_login = otv_session.get(login_page_url, headers=headers, verify=False, timeout=5)
         soup = BeautifulSoup(get_login.text, 'html.parser')
         csrf_token = soup.find('input', {'name': '_token'})
@@ -129,10 +105,7 @@ def extract_authenticated_otv_stream():
         if csrf_token:
             payload['_token'] = csrf_token['value']
 
-        # Execute backend login session handshake
         otv_session.post(login_page_url, data=payload, headers=headers, verify=False, timeout=5)
-
-        # Scrape tokenized playback manifest
         live_page = otv_session.get(live_page_url, headers=headers, verify=False, timeout=5)
         match = re.search(r'(https://[^\s"\']+\.m3u8[^\s"\']*)', live_page.text)
         if match:
@@ -143,9 +116,6 @@ def extract_authenticated_otv_stream():
     return FALLBACKS["otv"]
 
 def fetch_community_stream(channel_keyword, country_code="lb"):
-    """
-    Automatically parses the global daily-maintained list for fresh streaming links.
-    """
     url = f"https://iptv-org.github.io/iptv/countries/{country_code}.m3u"
     try:
         response = requests.get(url, verify=False, timeout=5)
@@ -153,242 +123,136 @@ def fetch_community_stream(channel_keyword, country_code="lb"):
             lines = response.text.split('\n')
             for i, line in enumerate(lines):
                 if channel_keyword.lower() in line.lower():
-                    # Bypass radio tags when querying a TV channel keyword context
                     if "radio" in line.lower() and "radio" not in channel_keyword.lower():
                         continue
 
                     if i + 1 < len(lines):
                         stream_url = lines[i+1].strip()
-
-                        # Hard-blacklist the dead edgenextcdn link
                         if "edgenextcdn.net" in stream_url:
                             continue
-
                         if stream_url.startswith("http"):
                             return stream_url
     except Exception:
         pass
     return None
 
-
 def build_channel_list():
-    """
-    Compiles the full dynamic playlist. This is the slow part (network
-    scraping + optional headless browser launch) and is meant to be run
-    in a background thread, never directly inside a request handler.
-    """
     channels = [
         {
             "id": "mtv",
-            "name": "MTV Lebanon (TV)",
+            "name": "MTV Lebanon",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-            "url": fetch_xtream_stream("12345") or FALLBACKS["mtv"] or get_authenticated_stream() or FALLBACKS["mtv_alt"]
-        },
-        {
-            "id": "lbci",
-            "name": "LBCI Lebanon",
-            "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-            "url": fetch_xtream_stream("67890") or fetch_community_stream("lbci", "lb") or FALLBACKS["lbci"]
+            "url": FALLBACKS["mtv"] or fetch_xtream_stream("12345") or get_authenticated_stream() or FALLBACKS["mtv_alt"]
         },
         {
             "id": "otv",
             "name": "OTV Lebanon",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
             "url": fetch_xtream_stream("11223") or extract_authenticated_otv_stream()
         },
         {
             "id": "al_jadeed",
             "name": "Al Jadeed",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
             "url": fetch_community_stream("jadeed", "lb") or FALLBACKS["aljadeed"]
-        },
-        {
-            "id": "nbn",
-            "name": "NBN Lebanon",
-            "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-            "url": fetch_community_stream("nbn", "lb") or FALLBACKS["nbn"]
         },
         {
             "id": "al_manar",
             "name": "Al Manar",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
             "url": fetch_community_stream("manar", "lb") or FALLBACKS["almanar"]
         },
         {
             "id": "teleliban",
             "name": "Tele Liban",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
             "url": FALLBACKS["tele"] or fetch_community_stream("tele liban", "lb")
         },
         {
             "id": "future_tv",
             "name": "Future TV",
             "category": "Lebanon",
-            "logo": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100",
             "url": fetch_community_stream("future", "lb") or FALLBACKS["future"]
         },
         {
             "id": "noursat",
             "name": "Noursat",
             "category": "Lebanon (Religious)",
-            "logo": "https://images.unsplash.com/photo-1544427928-c49cddee01bb?w=100",
             "url": fetch_community_stream("noursat", "lb") or FALLBACKS["noursat"]
         },
         {
             "id": "mariam_tv",
             "name": "Mariam TV",
             "category": "Lebanon (Cultural)",
-            "logo": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=100",
             "url": fetch_community_stream("mariam", "lb") or FALLBACKS["mariam"]
         },
         {
             "id": "al_mayadeen",
             "name": "Al Mayadeen",
             "category": "News",
-            "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
             "url": fetch_community_stream("mayadeen", "lb") or FALLBACKS["almayadeen"]
         },
         {
             "id": "alarabiya",
             "name": "Al Arabiya",
             "category": "News",
-            "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
             "url": FALLBACKS["alarabiya"],
             "referer": FALLBACKS["alarabiya_referer"]
         },
         {
-            "id": "aljazeera",
-            "name": "Al Jazeera",
+            "id": "aljazeera_arabic",
+            "name": "Al Jazeera Arabic",
             "category": "News",
-            "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-            "url": FALLBACKS["aljazeera"]
+            "url": FALLBACKS["aljazeera_arabic"]
         },
         {
             "id": "cnbc",
             "name": "CNBC Arabiya",
             "category": "Business",
-            "logo": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100",
             "url": fetch_community_stream("cnbc", "ae") or FALLBACKS["cnbc"]
         },
         {
             "id": "bloomberg",
             "name": "Bloomberg TV",
             "category": "Business",
-            "logo": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100",
             "url": fetch_community_stream("bloomberg", "us") or FALLBACKS["bloomberg"]
         },
         {
             "id": "france24",
             "name": "France 24 (EN)",
             "category": "News",
-            "logo": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100",
             "url": fetch_community_stream("france 24", "fr") or FALLBACKS["france24"]
-        },
-        {
-            "id": "abc_news",
-            "name": "ABC News Live",
-            "category": "News (US International)",
-            "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-            "url": fetch_community_stream("abc news", "us") or FALLBACKS["abcnews"]
-        },
-        {
-            "id": "natgeo",
-            "name": "Nat Geo Abu Dhabi",
-            "category": "Documentary",
-            "logo": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100",
-            "url": fetch_xtream_stream("44556") or fetch_community_stream("geographic", "ae") or FALLBACKS["natgeo"]
         }
     ]
     return channels
 
-
-# =========================================================================
-# BACKGROUND REFRESH CACHE
-# /api/channels must respond instantly. All the slow scraping/Playwright
-# work happens here, on a timer, in a background thread. The route just
-# reads whatever is currently in `channel_cache`.
-# =========================================================================
 channel_cache = {
     "channels": [],
     "last_updated": 0,
     "building": False
 }
 
-REFRESH_INTERVAL_SECONDS = 30 * 60  # rebuild every 30 minutes
+REFRESH_INTERVAL_SECONDS = 30 * 60
 
 def build_fallback_only_list():
-    """
-    Instant, zero-network-call channel list using only the static
-    FALLBACKS dict. Used to populate the cache immediately on startup
-    so the very first request never has to wait on a cold cache.
-    """
     return [
-        {"id": "mtv", "name": "MTV Lebanon (TV)", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["mtv"]},
-        {"id": "lbci", "name": "LBCI Lebanon", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["lbci"]},
-        {"id": "otv", "name": "OTV Lebanon", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["otv"]},
-        {"id": "al_jadeed", "name": "Al Jadeed", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["aljadeed"]},
-        {"id": "nbn", "name": "NBN Lebanon", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["nbn"]},
-        {"id": "al_manar", "name": "Al Manar", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["almanar"]},
-        {"id": "teleliban", "name": "Tele Liban", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=100",
-         "url": FALLBACKS["tele"]},
-        {"id": "future_tv", "name": "Future TV", "category": "Lebanon",
-         "logo": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100",
-         "url": FALLBACKS["future"]},
-        {"id": "noursat", "name": "Noursat", "category": "Lebanon (Religious)",
-         "logo": "https://images.unsplash.com/photo-1544427928-c49cddee01bb?w=100",
-         "url": FALLBACKS["noursat"]},
-        {"id": "mariam_tv", "name": "Mariam TV", "category": "Lebanon (Cultural)",
-         "logo": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=100",
-         "url": FALLBACKS["mariam"]},
-        {"id": "al_mayadeen", "name": "Al Mayadeen", "category": "News",
-         "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-         "url": FALLBACKS["almayadeen"]},
-        {"id": "alarabiya", "name": "Al Arabiya", "category": "News",
-         "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-         "url": FALLBACKS["alarabiya"], "referer": FALLBACKS["alarabiya_referer"]},
-        {"id": "aljazeera", "name": "Al Jazeera", "category": "News",
-         "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-         "url": FALLBACKS["aljazeera"]},
-        {"id": "cnbc", "name": "CNBC Arabiya", "category": "Business",
-         "logo": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100",
-         "url": FALLBACKS["cnbc"]},
-        {"id": "bloomberg", "name": "Bloomberg TV", "category": "Business",
-         "logo": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=100",
-         "url": FALLBACKS["bloomberg"]},
-        {"id": "france24", "name": "France 24 (EN)", "category": "News",
-         "logo": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100",
-         "url": FALLBACKS["france24"]},
-        {"id": "abc_news", "name": "ABC News Live", "category": "News (US International)",
-         "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
-         "url": FALLBACKS["abcnews"]},
-        {"id": "natgeo", "name": "Nat Geo Abu Dhabi", "category": "Documentary",
-         "logo": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100",
-         "url": FALLBACKS["natgeo"]},
+        {"id": "mtv", "name": "MTV Lebanon", "category": "Lebanon", "url": FALLBACKS["mtv"]},
+        {"id": "otv", "name": "OTV Lebanon", "category": "Lebanon", "url": FALLBACKS["otv"]},
+        {"id": "al_jadeed", "name": "Al Jadeed", "category": "Lebanon", "url": FALLBACKS["aljadeed"]},
+        {"id": "al_manar", "name": "Al Manar", "category": "Lebanon", "url": FALLBACKS["almanar"]},
+        {"id": "teleliban", "name": "Tele Liban", "category": "Lebanon", "url": FALLBACKS["tele"]},
+        {"id": "future_tv", "name": "Future TV", "category": "Lebanon", "url": FALLBACKS["future"]},
+        {"id": "noursat", "name": "Noursat", "category": "Lebanon (Religious)", "url": FALLBACKS["noursat"]},
+        {"id": "mariam_tv", "name": "Mariam TV", "category": "Lebanon (Cultural)", "url": FALLBACKS["mariam"]},
+        {"id": "al_mayadeen", "name": "Al Mayadeen", "category": "News", "url": FALLBACKS["almayadeen"]},
+        {"id": "alarabiya", "name": "Al Arabiya", "category": "News", "url": FALLBACKS["alarabiya"], "referer": FALLBACKS["alarabiya_referer"]},
+        {"id": "aljazeera_arabic", "name": "Al Jazeera Arabic", "category": "News", "url": FALLBACKS["aljazeera_arabic"]},
+        {"id": "cnbc", "name": "CNBC Arabiya", "category": "Business", "url": FALLBACKS["cnbc"]},
+        {"id": "bloomberg", "name": "Bloomberg TV", "category": "Business", "url": FALLBACKS["bloomberg"]},
+        {"id": "france24", "name": "France 24 (EN)", "category": "News", "url": FALLBACKS["france24"]},
     ]
 
-
 def refresh_channel_cache():
-    """Runs the slow build, then atomically swaps it into the cache."""
     if channel_cache["building"]:
         return
     channel_cache["building"] = True
@@ -402,53 +266,31 @@ def refresh_channel_cache():
     finally:
         channel_cache["building"] = False
 
-
 def background_refresh_loop():
-    # Populate instantly with fallbacks so the first request never waits.
     channel_cache["channels"] = build_fallback_only_list()
     channel_cache["last_updated"] = time.time()
-    print("[Cache] Seeded initial channel list from fallbacks.")
-
-    # Now kick off the real (slow) build in this same background thread.
     refresh_channel_cache()
-
-    # Keep refreshing on a timer forever.
     while True:
         time.sleep(REFRESH_INTERVAL_SECONDS)
         refresh_channel_cache()
 
-
-# Start the background thread once, at import time, so it works correctly
-# under gunicorn (not just `python app.py`).
 _refresh_thread = threading.Thread(target=background_refresh_loop, daemon=True)
 _refresh_thread.start()
-
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
 @app.route('/api/channels')
 def get_channels():
-    """
-    Returns whatever is currently cached. Never does network/Playwright
-    work inline, so this always responds in milliseconds.
-    """
     return jsonify(channel_cache["channels"])
-
 
 @app.route('/api/channels/refresh', methods=['POST'])
 def force_refresh():
-    """
-    Manually trigger a background refresh without blocking the caller.
-    Useful for an admin button or cron-style external trigger.
-    """
     if channel_cache["building"]:
         return jsonify({"status": "already_building"}), 202
     threading.Thread(target=refresh_channel_cache, daemon=True).start()
     return jsonify({"status": "refresh_started"}), 202
-
 
 @app.route('/proxy')
 def stream_proxy():
@@ -516,7 +358,6 @@ def stream_proxy():
     except Exception as e:
         print(f"[Proxy Error] Failed to tunnel stream segment: {e}")
         return f"Proxy Error: {str(e)}", 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
