@@ -2,8 +2,6 @@ services:
   - type: web
     name: my-live-app
     env: python
-    # We specify the runtime version directly in the blueprint
-    runtime: python-3.12.9
     buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install chromium && python -m playwright install-deps"
     startCommand: "gunicorn app:app"
     envVars:
