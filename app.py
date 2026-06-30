@@ -23,12 +23,12 @@ XTREAM_PASSWORD = "your_password"
 # Persistent sessions
 otv_session = requests.Session()
 
-# Verified Fallbacks (Restored to original working links for MTV & Tele Liban)
+# Verified Fallbacks (Locked to your working local streams)
 FALLBACKS = {
     "mtv": "https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mtv-lebanon/b8ebb2a5affb812f1541712adde10e26/index.m3u8",
     "mtv_alt": "https://live.3cd.io/v1/broadcast/mtv/playlist.m3u8",
     "otv": "https://otv.hibridcdn.net/otv/tv_abr/playlist.m3u8",
-    "tele": "https://cdn.catiacast.video/abr/ed8f807e2548db4507d2a6f4ba0c4a06/playlist.m3u8",
+    "tele": "https://teleliban.b-cdn.net/live/stream/playlist.m3u8",
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
