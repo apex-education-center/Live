@@ -138,7 +138,7 @@ def build_channel_list():
             "id": "mtv",
             "name": "MTV Lebanon",
             "category": "Lebanon",
-            "url": fetch_xtream_stream("12345") or FALLBACKS["mtv"] or get_authenticated_stream() or FALLBACKS["mtv_alt"]
+            "url": get_authenticated_stream() or FALLBACKS["mtv"]
         },
         {
             "id": "otv",
