@@ -354,9 +354,6 @@
                 const response = await fetch('/api/channels');
                 allChannels = await response.json();
                 renderGroupedChannels(allChannels);
-                if(allChannels.length > 0) {
-                    selectChannel(allChannels[0]);
-                }
             } catch (err) {
                 console.error("Failed to load channel list", err);
             }
