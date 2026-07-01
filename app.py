@@ -32,7 +32,7 @@ FALLBACKS = {
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
-    "alhadath": "https://live.alarabiya.net/alhadathpublish/alhadath.smil/playlist.m3u8",
+    "alhadath": "https://cdnme.alhadath.net/hls/alhadath.m3u8",
     "alhadath_referer": "https://www.alhadath.net/",
     "aljazeera_arabic": "https://live-hls-web-aja.getaj.net/AJA/index.m3u8",
     "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
