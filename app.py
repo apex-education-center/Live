@@ -1,193 +1,468 @@
-from flask import Flask, render_template, request, Response, jsonify
-import requests
-import re
-import urllib.parse
-from bs4 import BeautifulSoup
-import urllib3
-from playwright.sync_api import sync_playwright
-import time
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Channels Plus</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0B0C10;
+            --bg-sidebar: #1F2833;
+            --bg-card: #2B3441;
+            --accent: #66FCF1; 
+            --accent-dark: #45A29E;
+            --text-main: #C5C6C7;
+            --text-muted: #8A8D91;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-app = Flask(__name__, template_folder='templates')
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-XTREAM_SERVER = "http://your-iptv-provider-domain.com:8080"
-XTREAM_USERNAME = "your_username"
-XTREAM_PASSWORD = "your_password"
+        /* Sidebar Styles */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 10;
+            box-shadow: var(--shadow);
+        }
 
-otv_session = requests.Session()
+        .brand {
+            padding: 24px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-FALLBACKS = {
-    "mtv": "https://hms.pfs.gdn/v1/broadcast/mtv/playlist.m3u8",
-    "mtv_alt": "https://live.3cd.io/v1/broadcast/mtv/playlist.m3u8",
-    "lbci": "https://mhd.itworkscdn.net/lbclive/lbc/playlist.m3u8",
-    "otv": "https://otv.hibridcdn.net/otv/tv_abr/playlist.m3u8",
-    "tele": "https://teleliban.b-cdn.net/live/stream/playlist.m3u8",
-    "aljadeed": "http://185.9.2.18/chid_391/mono.m3u8",
-    "nbn": "https://nbntv.me:8443/nbntv/index.m3u8",
-    "almanar": "https://edge.fastpublish.me/live/index.m3u8",
-    "natgeo": "https://YOUR_IPTV_PROVIDER.com/natgeo.m3u8",
-    "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
-    "alarabiya_referer": "https://www.alarabiya.net/",
-    "alhadath": "https://live.alarabiya.net/alhadathpublish/alhadath.smil/playlist.m3u8",
-    "alhadath_referer": "https://www.alhadath.net/",
-    "aljazeera": "https://live-hls-apps-aja-v3-fa.getaj.net/AJA/index.m3u8",
-    "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
-    "noursat": "https://cllive.itworkscdn.net/noursat/live.smil/playlist.m3u8",
-    "mariam": "https://cllive.itworkscdn.net/mariamtv/live.smil/playlist.m3u8",
-    "future": "https://futuretv.b-cdn.net/live/stream/playlist.m3u8",
-    "almayadeen": "https://live.almayadeen.net/live/smil:almayadeen.smil/playlist.m3u8",
-    "bloomberg": "https://bloomberg.com/media-manifest/streams/us.m3u8",
-    "france24": "https://live.france24.com/hls/live/2037218-b/F24_EN_HI_HLS/master_5000.m3u8",
-    "abcnews": "https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8"
-}
+        .brand i {
+            color: var(--accent);
+        }
 
-def fetch_xtream_stream(stream_id):
-    if not XTREAM_USERNAME or XTREAM_USERNAME == "your_username":
-        return None
-    return f"{XTREAM_SERVER}/live/{XTREAM_USERNAME}/{XTREAM_PASSWORD}/{stream_id}.m3u8"
+        .search-box {
+            padding: 16px;
+            background: rgba(0,0,0,0.1);
+        }
 
-stream_cache = {"url": None, "timestamp": 0}
+        .search-container {
+            position: relative;
+        }
 
-def get_authenticated_stream():
-    if stream_cache["url"] and (time.time() - stream_cache["timestamp"] < 3600):
-        return stream_cache["url"]
+        .search-container i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
 
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-            page = context.new_page()
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(102, 252, 241, 0.2);
+        }
+
+        .channel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Custom Scrollbar */
+        .channel-list::-webkit-scrollbar { width: 6px; }
+        .channel-list::-webkit-scrollbar-track { background: transparent; }
+        .channel-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .channel-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        .category-section {
+            margin-bottom: 20px;
+        }
+
+        .category-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-dark);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-left: 8px;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: transparent;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .channel-item:hover {
+            background: var(--bg-card);
+        }
+
+        .channel-item.active {
+            background: rgba(102, 252, 241, 0.1);
+            border: 1px solid rgba(102, 252, 241, 0.3);
+        }
+
+        .channel-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-dark), #2B3441);
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .channel-item.active .channel-avatar {
+            background: var(--accent);
+            color: var(--bg-main);
+        }
+
+        .channel-info h4 {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .channel-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-main);
+            position: relative;
+        }
+
+        .player-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(circle at center, #1F2833 0%, #0B0C10 100%);
+        }
+
+        video {
+            width: 100%;
+            max-height: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            outline: none;
+        }
+
+        .view-meta {
+            padding: 20px 30px;
+            background: var(--bg-sidebar);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+        }
+
+        .meta-text h2 {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .meta-text p {
+            color: var(--accent-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(102, 252, 241, 0.1);
+            color: var(--accent);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(102, 252, 241, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .external-badge {
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-left: 6px;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                overflow: hidden; 
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 50vh; 
+                border-right: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                order: 2;
+            }
+
+            .main-content {
+                height: 50vh;
+                order: 1;
+                flex: none;
+            }
+
+            .player-container {
+                padding: 0;
+                background: #000;
+                height: calc(100% - 70px); 
+            }
+
+            video {
+                border-radius: 0;
+                height: 100%;
+                max-height: none;
+                box-shadow: none;
+            }
+
+            .view-meta {
+                padding: 12px 20px;
+                height: 70px;
+            }
+
+            .meta-text h2 {
+                font-size: 1.1rem;
+            }
             
-            captured_url = None
-            def handle_response(response):
-                nonlocal captured_url
-                if ".m3u8" in response.url and "edgenextcdn" not in response.url and ("bitmovin" in response.url or "pfs.gdn" in response.url or "broadcast" in response.url):
-                    captured_url = response.url
-
-            page.on("response", handle_response)
-            page.goto("https://www.mtv.com.lb/live", timeout=15000)
-            page.wait_for_timeout(3000) 
-            browser.close()
+            .brand {
+                display: none; 
+            }
             
-            if captured_url:
-                stream_cache["url"] = captured_url
-                stream_cache["timestamp"] = time.time()
-                return captured_url
-    except Exception as e:
-        print(f"[Scraper Error] {e}")
-    return None
+            .search-box {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
 
-def extract_authenticated_otv_stream():
-    return FALLBACKS["otv"]
+    <div class="sidebar">
+        <div class="brand"><i class="fa-solid fa-tv"></i> Channels Plus</div>
+        <div class="search-box">
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchChannels" placeholder="Search channels...">
+            </div>
+        </div>
+        <div class="channel-list" id="channelListContainer"></div>
+    </div>
 
-def fetch_community_stream(channel_keyword, country_code="lb"):
-    url = f"https://iptv-org.github.io/iptv/countries/{country_code}.m3u"
-    try:
-        response = requests.get(url, verify=False, timeout=3)
-        if response.status_code == 200:
-            lines = response.text.split('\n')
-            for i, line in enumerate(lines):
-                if channel_keyword.lower() in line.lower():
-                    if "radio" in line.lower() and "radio" not in channel_keyword.lower():
-                        continue
-                    if i + 1 < len(lines):
-                        stream_url = lines[i+1].strip()
-                        if "edgenextcdn.net" in stream_url:
-                            continue
-                        if stream_url.startswith("http"):
-                            return stream_url
-    except Exception:
-        pass
-    return None
+    <div class="main-content">
+        <div class="player-container">
+            <video id="videoPlayer" controls autoplay playsinline></video>
+        </div>
+        <div class="view-meta">
+            <div class="meta-text">
+                <h2 id="currentChannelTitle">Select a Channel</h2>
+                <p id="currentChannelCategory">Ready to play</p>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div> Live
+            </div>
+        </div>
+    </div>
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+    <script>
+        const video = document.getElementById('videoPlayer');
+        let hlsInstance = null;
+        let allChannels = [];
+        let currentChannel = null;
 
-@app.route('/api/channels')
-def get_channels():
-    # Light-weight setup so the list populates in milliseconds
-    channels = [
-        {"id": "mtv", "name": "MTV Lebanon (TV)", "category": "Lebanon", "url": "DYNAMIC_MTV"},
-        {"id": "lbci", "name": "LBCI Lebanon", "category": "Lebanon", "url": fetch_xtream_stream("67890") or FALLBACKS["lbci"]},
-        {"id": "otv", "name": "OTV Lebanon", "category": "Lebanon", "url": fetch_xtream_stream("11223") or FALLBACKS["otv"]},
-        {"id": "al_jadeed", "name": "Al Jadeed", "category": "Lebanon", "url": FALLBACKS["aljadeed"]},
-        {"id": "nbn", "name": "NBN Lebanon", "category": "Lebanon", "url": FALLBACKS["nbn"]},
-        {"id": "al_manar", "name": "Al Manar", "category": "Lebanon", "url": FALLBACKS["almanar"]},
-        {"id": "teleliban", "name": "Tele Liban", "category": "Lebanon", "url": FALLBACKS["tele"]},
-        {"id": "future_tv", "name": "Future TV", "category": "Lebanon", "url": FALLBACKS["future"]},
-        {"id": "noursat", "name": "Noursat", "category": "Lebanon (Religious)", "url": FALLBACKS["noursat"]},
-        {"id": "mariam_tv", "name": "Mariam TV", "category": "Lebanon (Cultural)", "url": FALLBACKS["mariam"]},
-        {"id": "al_mayadeen", "name": "Al Mayadeen", "category": "News", "url": FALLBACKS["almayadeen"]},
-        {"id": "alarabiya", "name": "Al Arabiya", "category": "News", "url": FALLBACKS["alarabiya"], "referer": FALLBACKS["alarabiya_referer"]},
-        {"id": "alhadath", "name": "Al Hadath", "category": "News", "url": FALLBACKS["alhadath"], "referer": FALLBACKS["alhadath_referer"]},
-        {"id": "aljazeera", "name": "Al Jazeera", "category": "News", "url": FALLBACKS["aljazeera"]},
-        {"id": "cnbc", "name": "CNBC Arabiya", "category": "Business", "url": FALLBACKS["cnbc"]},
-        {"id": "bloomberg", "name": "Bloomberg TV", "category": "Business", "url": FALLBACKS["bloomberg"]},
-        {"id": "france24", "name": "France 24 (EN)", "category": "News", "url": FALLBACKS["france24"]},
-        {"id": "abc_news", "name": "ABC News Live", "category": "News (US International)", "url": FALLBACKS["abcnews"]},
-        {"id": "natgeo", "name": "Nat Geo Abu Dhabi", "category": "Documentary", "url": fetch_xtream_stream("44556") or FALLBACKS["natgeo"]}
-    ]
-    return jsonify(channels)
+        async function loadChannels() {
+            try {
+                const response = await fetch('/api/channels');
+                allChannels = await response.json();
+                renderGroupedChannels(allChannels);
+            } catch (err) {
+                console.error("Failed to load channel list", err);
+            }
+        }
 
-@app.route('/api/resolve_stream/<channel_id>')
-def resolve_stream(channel_id):
-    # Dynamically resolve heavy streams only when clicked
-    if channel_id == "mtv":
-        url = fetch_xtream_stream("12345") or get_authenticated_stream() or fetch_community_stream("mtv lebanon", "lb") or FALLBACKS["mtv"]
-        return jsonify({"url": url})
-    return jsonify({"error": "Standard stream"}), 400
+        function renderGroupedChannels(channels) {
+            const container = document.getElementById('channelListContainer');
+            container.innerHTML = '';
 
-@app.route('/proxy')
-def stream_proxy():
-    target_url = request.args.get('url')
-    referer_header = request.args.get('referer')
-    
-    if not target_url or target_url.startswith("https://YOUR_IPTV_PROVIDER") or target_url == "DYNAMIC_MTV":
-        return "Stream URL empty or unconfigured", 400
+            const groups = {};
+            channels.forEach(chan => {
+                if(!groups[chan.category]) groups[chan.category] = [];
+                groups[chan.category].push(chan);
+            });
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-    if referer_header:
-        headers['Referer'] = referer_header
-    else:
-        headers['Referer'] = '/'.join(target_url.split('/')[:3]) + '/'
+            for (const [category, items] of Object.entries(groups)) {
+                const sect = document.createElement('div');
+                sect.className = 'category-section';
+                
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.innerText = category;
+                sect.appendChild(header);
 
-    try:
-        req = requests.get(target_url, headers=headers, stream=True, verify=False, timeout=10)
-        exclude_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-        response_headers = [(name, value) for name, value in req.headers.items() if name.lower() not in exclude_headers]
-        response_headers.append(('Access-Control-Allow-Origin', '*'))
+                items.forEach(chan => {
+                    const item = document.createElement('div');
+                    item.className = 'channel-item';
+                    item.id = `chan-${chan.id}`;
+                    item.onclick = () => selectChannel(chan);
+                    
+                    const externalBadge = chan.is_external ? '<span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>' : '';
+                    
+                    item.innerHTML = `
+                        <div class="channel-avatar">${chan.name.substring(0,2)}</div>
+                        <div class="channel-info"><h4>${chan.name}${externalBadge}</h4></div>
+                    `;
+                    sect.appendChild(item);
+                });
+                container.appendChild(sect);
+            }
+        }
 
-        if '.m3u8' in target_url or 'playlist' in target_url:
-            content = req.text
-            base_url = target_url.rsplit('/', 1)[0]
-            lines = content.split('\n')
-            rewritten_lines = []
+        function selectChannel(channel) {
+            currentChannel = channel;
+            
+            // Mark as active in sidebar
+            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+            const selectedEl = document.getElementById(`chan-${channel.id}`);
+            if(selectedEl) {
+                selectedEl.classList.add('active');
+                selectedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
 
-            for line in lines:
-                stripped = line.strip()
-                if not stripped: continue
-                if not stripped.startswith('#') and not stripped.startswith('http'):
-                    if stripped.startswith('/'):
-                        absolute_url = '/'.join(target_url.split('/')[:3]) + stripped
-                    else:
-                        absolute_url = base_url + '/' + stripped
-                    param_url = f"/proxy?url={urllib.parse.quote_plus(absolute_url)}"
-                    if referer_header: param_url += f"&referer={urllib.parse.quote_plus(referer_header)}"
-                    rewritten_lines.append(param_url)
-                elif stripped.startswith('http') and not stripped.startswith('/proxy'):
-                    param_url = f"/proxy?url={urllib.parse.quote_plus(stripped)}"
-                    if referer_header: param_url += f"&referer={urllib.parse.quote_plus(referer_header)}"
-                    rewritten_lines.append(param_url)
-                else:
-                    rewritten_lines.append(line)
+            document.getElementById('currentChannelTitle').innerText = channel.name;
+            document.getElementById('currentChannelCategory').innerText = channel.category;
 
-            return Response('\n'.join(rewritten_lines), status=req.status_code, headers=response_headers, content_type='application/vnd.apple.mpegurl')
+            // 1. Handle External Links - Open immediately in new window
+            if (channel.is_external) {
+                window.open(channel.url, '_blank');
+                video.src = '';
+                return;
+            }
 
-        return Response(req.iter_content(chunk_size=32768), status=req.status_code, headers=response_headers, content_type=req.headers.get('Content-Type'))
-    except Exception as e:
-        return f"Proxy Error: {str(e)}", 500
+            // 2. Handle Internal HLS Playback
+            playStream(channel);
+        }
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        function playStream(channel) {
+            // If external, open in new window
+            if (channel.is_external) {
+                window.open(channel.url, '_blank');
+                return;
+            }
+
+            let proxyUrl = `/proxy?url=${encodeURIComponent(channel.url)}`;
+            if(channel.referer) {
+                proxyUrl += `&referer=${encodeURIComponent(channel.referer)}`;
+            }
+
+            if (Hls.isSupported()) {
+                if (hlsInstance) hlsInstance.destroy();
+                hlsInstance = new Hls({ 
+                    maxBufferLength: 15, 
+                    liveDurationInfinity: true,
+                    enableWorker: true
+                });
+                hlsInstance.loadSource(proxyUrl);
+                hlsInstance.attachMedia(video);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(e => console.log("Auto-play prevented", e));
+                });
+            } 
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = proxyUrl;
+                video.addEventListener('loadedmetadata', () => {
+                    video.play().catch(e => console.log("Auto-play prevented", e));
+                });
+            }
+        }
+
+        document.getElementById('searchChannels').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allChannels.filter(chan => 
+                chan.name.toLowerCase().includes(query) || chan.category.toLowerCase().includes(query)
+            );
+            renderGroupedChannels(filtered);
+        });
+
+        window.addEventListener('DOMContentLoaded', loadChannels);
+    </script>
+</body>
+</html>
