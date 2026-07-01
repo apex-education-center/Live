@@ -20,320 +20,91 @@
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            background-color: var(--bg-main); color: var(--text-main);
+            display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* Sidebar Styles */
         .sidebar {
-            width: 340px;
-            background-color: var(--bg-sidebar);
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border);
-            z-index: 10;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
+            width: 340px; background-color: var(--bg-sidebar);
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--border); z-index: 10; box-shadow: var(--shadow);
         }
 
         .brand {
-            padding: 24px;
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.5px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 24px; font-size: 1.6rem; font-weight: 800; color: #fff;
+            border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
             background: rgba(0,0,0,0.1);
         }
 
-        .brand i {
-            color: var(--accent);
-            font-size: 1.8rem;
-        }
+        .brand i { color: var(--accent); font-size: 1.8rem; }
 
-        .search-box {
-            padding: 20px;
-            background: var(--bg-sidebar);
-        }
-
-        .search-container {
-            position: relative;
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
+        .search-box { padding: 20px; background: var(--bg-sidebar); }
+        .search-container { position: relative; }
+        .search-container i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
         .search-box input {
-            width: 100%;
-            padding: 14px 16px 14px 44px;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.3s ease;
+            width: 100%; padding: 14px 16px 14px 44px; background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border); border-radius: 12px; color: #fff; outline: none; transition: all 0.3s;
         }
+        .search-box input:focus { border-color: var(--accent); background: rgba(15, 23, 42, 0.8); }
 
-        .search-box input:focus {
-            border-color: var(--accent);
-            background: rgba(15, 23, 42, 0.8);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-        }
-
-        .channel-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 20px 20px 20px;
-        }
-
+        .channel-list { flex: 1; overflow-y: auto; padding: 12px 20px 20px; }
         .channel-list::-webkit-scrollbar { width: 6px; }
-        .channel-list::-webkit-scrollbar-track { background: transparent; }
         .channel-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .channel-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        .category-section {
-            margin-bottom: 24px;
-        }
-
-        .category-header {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 1.2px;
-            margin-bottom: 12px;
-            padding-left: 4px;
-        }
+        .category-section { margin-bottom: 24px; }
+        .category-header { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; margin-bottom: 12px; }
 
         .channel-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: transparent;
-            border-radius: 12px;
-            margin-bottom: 6px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
+            display: flex; align-items: center; padding: 12px; border-radius: 12px;
+            margin-bottom: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
         }
-
-        .channel-item:hover {
-            background: rgba(255, 255, 255, 0.03);
-            transform: translateX(4px);
-        }
-
-        .channel-item.active {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
+        .channel-item:hover { background: rgba(255, 255, 255, 0.03); transform: translateX(4px); }
+        .channel-item.active { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); }
 
         .channel-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
+            width: 42px; height: 42px; border-radius: 10px;
             background: linear-gradient(135deg, var(--accent-dark), var(--bg-card));
-            margin-right: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
-            color: #fff;
-            text-transform: uppercase;
-            flex-shrink: 0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            margin-right: 14px; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #fff; text-transform: uppercase; flex-shrink: 0;
         }
+        .channel-item.active .channel-avatar { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: var(--bg-main); }
+        .channel-info { flex: 1; min-width: 0; }
+        .channel-info h4 { font-size: 1rem; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .channel-item.active .channel-avatar {
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            color: var(--bg-main);
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+        .player-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 30px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+        video { width: 100%; max-height: 100%; aspect-ratio: 16/9; background: #000; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); outline: none; }
 
-        .channel-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .channel-info h4 {
-            font-size: 1rem;
-            font-weight: 500;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-main);
-            position: relative;
-        }
-
-        .player-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-        }
-
-        video {
-            width: 100%;
-            max-height: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            outline: none;
-            object-fit: contain;
-        }
-
-        .view-meta {
-            padding: 24px 40px;
-            background: var(--bg-sidebar);
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 20;
-        }
-
-        .meta-text h2 {
-            font-size: 1.6rem;
-            color: #fff;
-            margin-bottom: 6px;
-            letter-spacing: -0.5px;
-        }
-
-        .meta-text p {
-            color: var(--accent);
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 18px;
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--accent);
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent);
-            border-radius: 50%;
-            margin-right: 10px;
-            box-shadow: 0 0 10px var(--accent);
-            animation: pulse 2s infinite;
-        }
+        .view-meta { padding: 24px 40px; background: var(--bg-sidebar); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .meta-text h2 { font-size: 1.6rem; color: #fff; margin-bottom: 6px; }
+        .meta-text p { color: var(--accent); font-size: 0.95rem; font-weight: 500; }
+        .status-badge { display: inline-flex; align-items: center; padding: 8px 18px; background: rgba(56, 189, 248, 0.1); color: var(--accent); border-radius: 30px; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .status-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
 
         @keyframes pulse {
-            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
-            70% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
-            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
         }
 
-        .external-badge {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-left: 8px;
-        }
-
-        /* App-Like Mobile Responsiveness */
         @media (max-width: 900px) {
-            body {
-                flex-direction: column;
-            }
-
-            .main-content {
-                flex: none;
-                height: auto;
-                order: 1; /* Video on top for mobile */
-            }
-
-            .player-container {
-                padding: 0;
-                width: 100%;
-                aspect-ratio: 16/9; /* Perfect mobile video ratio */
-                background: #000;
-                position: sticky;
-                top: 0;
-                z-index: 50;
-            }
-
-            video {
-                border-radius: 0;
-                height: 100%;
-                box-shadow: none;
-            }
-
-            .view-meta {
-                padding: 16px 20px;
-                border-top: none;
-                border-bottom: 1px solid var(--border);
-            }
-
-            .meta-text h2 {
-                font-size: 1.2rem;
-            }
-
-            .sidebar {
-                width: 100%;
-                flex: 1; /* Fills remaining space */
-                order: 2;
-                border-right: none;
-            }
-
-            .brand {
-                display: none; /* Save space on mobile */
-            }
-
-            .search-box {
-                padding: 16px;
-                background: var(--bg-sidebar);
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                border-bottom: 1px solid var(--border);
-            }
-
-            .channel-list {
-                padding: 12px;
-            }
-            
-            .channel-item:hover {
-                transform: none; /* Disable hover movement on touch devices */
-            }
+            body { flex-direction: column; }
+            .main-content { flex: none; width: 100%; order: 1; }
+            .player-container { padding: 0; aspect-ratio: 16/9; position: sticky; top: 0; z-index: 50; }
+            video { border-radius: 0; }
+            .view-meta { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+            .meta-text h2 { font-size: 1.2rem; }
+            .sidebar { width: 100%; flex: 1; order: 2; border-right: none; }
+            .brand { display: none; }
+            .search-box { padding: 16px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); }
+            .channel-list { padding: 12px; }
+            .channel-item:hover { transform: none; }
         }
     </style>
 </head>
@@ -369,7 +140,6 @@
         const video = document.getElementById('videoPlayer');
         let hlsInstance = null;
         let allChannels = [];
-        let currentChannel = null;
 
         async function loadChannels() {
             try {
@@ -384,8 +154,8 @@
         function renderGroupedChannels(channels) {
             const container = document.getElementById('channelListContainer');
             container.innerHTML = '';
-
             const groups = {};
+            
             channels.forEach(chan => {
                 if(!groups[chan.category]) groups[chan.category] = [];
                 groups[chan.category].push(chan);
@@ -394,7 +164,6 @@
             for (const [category, items] of Object.entries(groups)) {
                 const sect = document.createElement('div');
                 sect.className = 'category-section';
-                
                 const header = document.createElement('div');
                 header.className = 'category-header';
                 header.innerText = category;
@@ -405,12 +174,9 @@
                     item.className = 'channel-item';
                     item.id = `chan-${chan.id}`;
                     item.onclick = () => selectChannel(chan);
-                    
-                    const externalBadge = chan.is_external ? '<span class="external-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>' : '';
-                    
                     item.innerHTML = `
                         <div class="channel-avatar">${chan.name.substring(0,2)}</div>
-                        <div class="channel-info"><h4>${chan.name}${externalBadge}</h4></div>
+                        <div class="channel-info"><h4>${chan.name}</h4></div>
                     `;
                     sect.appendChild(item);
                 });
@@ -418,74 +184,56 @@
             }
         }
 
-        function selectChannel(channel) {
-            currentChannel = channel;
-            
+        async function selectChannel(channel) {
             document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
             const selectedEl = document.getElementById(`chan-${channel.id}`);
-            if(selectedEl) {
-                selectedEl.classList.add('active');
-                
-                // Only auto-scroll on desktop to avoid annoying jumps on mobile
-                if (window.innerWidth > 900) {
-                    selectedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }
+            if(selectedEl) selectedEl.classList.add('active');
 
             document.getElementById('currentChannelTitle').innerText = channel.name;
             document.getElementById('currentChannelCategory').innerText = channel.category;
 
-            if (channel.is_external) {
-                window.open(channel.url, '_blank');
-                video.src = '';
-                return;
+            let finalUrl = channel.url;
+
+            // Dynamic stream resolution logic
+            if (channel.url === "DYNAMIC_MTV") {
+                document.getElementById('currentChannelTitle').innerText = "Loading Secure Stream...";
+                try {
+                    const res = await fetch(`/api/resolve_stream/${channel.id}`);
+                    const data = await res.json();
+                    finalUrl = data.url;
+                    document.getElementById('currentChannelTitle').innerText = channel.name;
+                } catch (e) {
+                    finalUrl = "https://hms.pfs.gdn/v1/broadcast/mtv/playlist.m3u8"; // Backup
+                }
             }
 
-            playStream(channel);
+            playStream(finalUrl, channel.referer);
             
-            // On mobile, scroll back up to the video player when a channel is tapped
             if (window.innerWidth <= 900) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
-        function playStream(channel) {
-            if (channel.is_external) {
-                window.open(channel.url, '_blank');
-                return;
-            }
-
-            let proxyUrl = `/proxy?url=${encodeURIComponent(channel.url)}`;
-            if(channel.referer) {
-                proxyUrl += `&referer=${encodeURIComponent(channel.referer)}`;
-            }
+        function playStream(streamUrl, referer) {
+            let proxyUrl = `/proxy?url=${encodeURIComponent(streamUrl)}`;
+            if(referer) proxyUrl += `&referer=${encodeURIComponent(referer)}`;
 
             if (Hls.isSupported()) {
                 if (hlsInstance) hlsInstance.destroy();
-                hlsInstance = new Hls({ 
-                    maxBufferLength: 15, 
-                    liveDurationInfinity: true,
-                    enableWorker: true
-                });
+                hlsInstance = new Hls({ maxBufferLength: 15, liveDurationInfinity: true, enableWorker: true });
                 hlsInstance.loadSource(proxyUrl);
                 hlsInstance.attachMedia(video);
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(e => console.log("Auto-play prevented", e));
-                });
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => {}));
             } 
             else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = proxyUrl;
-                video.addEventListener('loadedmetadata', () => {
-                    video.play().catch(e => console.log("Auto-play prevented", e));
-                });
+                video.addEventListener('loadedmetadata', () => video.play().catch(e => {}));
             }
         }
 
         document.getElementById('searchChannels').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            const filtered = allChannels.filter(chan => 
-                chan.name.toLowerCase().includes(query) || chan.category.toLowerCase().includes(query)
-            );
+            const filtered = allChannels.filter(chan => chan.name.toLowerCase().includes(query) || chan.category.toLowerCase().includes(query));
             renderGroupedChannels(filtered);
         });
 
