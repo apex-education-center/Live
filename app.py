@@ -32,6 +32,8 @@ FALLBACKS = {
     "almanar": "https://edge.fastpublish.me/live/index.m3u8",
     "alarabiya": "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8",
     "alarabiya_referer": "https://www.alarabiya.net/",
+    "alhadath": "https://live.alarabiya.net/alhadathpublish/alhadath.smil/playlist.m3u8",
+    "alhadath_referer": "https://www.alhadath.net/",
     "aljazeera_arabic": "https://live-hls-web-aja.getaj.net/AJA/index.m3u8",
     "cnbc": "https://cnbc-live.akamaized.net/cnbc/master.m3u8",
     "noursat": "https://cllive.itworkscdn.net/noursat/live.smil/playlist.m3u8",
@@ -186,6 +188,14 @@ def build_channel_list():
             "referer": FALLBACKS["alarabiya_referer"]
         },
         {
+            "id": "alhadath",
+            "name": "Al Hadath",
+            "category": "News",
+            "logo": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=100",
+            "url": fetch_community_stream("hadath", "sa") or FALLBACKS["alhadath"],
+            "referer": FALLBACKS["alhadath_referer"]
+        },
+        {
             "id": "aljazeera_arabic",
             "name": "Al Jazeera Arabic",
             "category": "News",
@@ -230,6 +240,7 @@ def build_fallback_only_list():
         {"id": "noursat", "name": "Noursat", "category": "Lebanon (Religious)", "url": FALLBACKS["noursat"]},
         {"id": "al_mayadeen", "name": "Al Mayadeen", "category": "News", "url": FALLBACKS["almayadeen"]},
         {"id": "alarabiya", "name": "Al Arabiya", "category": "News", "url": FALLBACKS["alarabiya"], "referer": FALLBACKS["alarabiya_referer"]},
+        {"id": "alhadath", "name": "Al Hadath", "category": "News", "url": FALLBACKS["alhadath"], "referer": FALLBACKS["alhadath_referer"]},
         {"id": "aljazeera_arabic", "name": "Al Jazeera Arabic", "category": "News", "url": FALLBACKS["aljazeera_arabic"]},
         {"id": "cnbc", "name": "CNBC Arabiya", "category": "Business", "url": FALLBACKS["cnbc"]},
         {"id": "bloomberg", "name": "Bloomberg TV", "category": "Business", "url": FALLBACKS["bloomberg"]},
