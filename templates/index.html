@@ -98,7 +98,6 @@
     align-items:center;
     justify-content:space-between;
   }
-  .brand span{color:var(--accent);}
   .brand .close-drawer{display:none;}
 
   .search-box{padding:16px 16px 8px;position:relative;}
@@ -262,7 +261,8 @@
   .live-badge{
     position:absolute;
     top:16px;left:16px;
-    display:flex;align-items:center;gap:6px;
+    display:none;
+    align-items:center;gap:6px;
     padding:5px 11px 5px 9px;
     background:rgba(10,10,13,.72);
     backdrop-filter:blur(6px);
@@ -273,6 +273,7 @@
     z-index:2;
     border:1px solid rgba(255,255,255,.08);
   }
+  .live-badge.show{display:flex;}
   .live-badge .dot{
     width:7px;height:7px;border-radius:50%;
     background:#ff4d4f;
@@ -321,85 +322,65 @@
     font-weight:600;
     flex-shrink:0;
     border:1px solid rgba(74,222,128,.25);
+    transition:background .2s ease,color .2s ease,border-color .2s ease;
   }
   .status-dot{
     width:7px;height:7px;
-    background:var(--accent);
+    background:currentColor;
     border-radius:50%;
     margin-right:8px;
-    box-shadow:0 0 8px var(--accent-glow);
+    box-shadow:0 0 8px currentColor;
+  }
+  .status-badge.status-connecting{
+    background:rgba(152,152,166,.12);color:var(--text-secondary);border-color:rgba(152,152,166,.25);
+  }
+  .status-badge.status-error{
+    background:rgba(255,77,79,.12);color:#ff6b6d;border-color:rgba(255,77,79,.3);
+  }
+  .status-badge.status-external{
+    background:rgba(147,163,255,.12);color:#93a3ff;border-color:rgba(147,163,255,.3);
   }
 
-  /* ---------- Footer ---------- */
-  .site-footer{
-    margin-top:auto;
-    padding:36px 40px 28px;
-    background:var(--bg-panel);
-    border-top:1px solid var(--border);
-    display:flex;
-    justify-content:space-between;
-    gap:32px;
-    flex-wrap:wrap;
+  /* ---------- External link card ---------- */
+  .external-card{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;
+    text-align:center;
+    padding:32px;
+    background:linear-gradient(135deg,#101015,#0a0a0d);
   }
-  .footer-brand{max-width:320px;}
-  .footer-brand .fb-title{
-    font-family:var(--font-display);
-    font-size:1.05rem;
+  .external-card.show{display:flex;}
+  .external-card .ext-logo{
+    width:64px;height:64px;
+    border-radius:var(--radius-md);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .external-card .ext-logo img{width:100%;height:100%;object-fit:contain;padding:8px;}
+  .external-card h3{font-family:var(--font-display);font-size:1.1rem;font-weight:600;}
+  .external-card p{color:var(--text-secondary);font-size:.85rem;max-width:360px;line-height:1.5;}
+  .external-card .ext-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    margin-top:6px;
+    padding:11px 20px;
+    background:var(--accent);
+    color:#08150e;
     font-weight:700;
-  }
-  .footer-brand .fb-title span{color:var(--accent);}
-  .footer-brand p{
-    margin-top:10px;
-    color:var(--text-secondary);
-    font-size:.83rem;
-    line-height:1.6;
-  }
-  .footer-cols{
-    display:flex;
-    gap:56px;
-    flex-wrap:wrap;
-  }
-  .footer-col h5{
-    font-size:.72rem;
-    text-transform:uppercase;
-    letter-spacing:.08em;
-    color:var(--text-faint);
-    margin-bottom:14px;
-    font-weight:700;
-  }
-  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
-  .footer-col a{
     font-size:.85rem;
-    color:var(--text-secondary);
-    transition:color .15s ease;
+    border-radius:var(--radius-md);
+    transition:transform .12s ease,filter .15s ease;
   }
-  .footer-col a:hover{color:var(--accent);}
-  .footer-bottom{
-    max-width:1400px;
-    margin:0 auto;
-    padding:18px 40px 0;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-    border-top:1px solid var(--border);
-    margin-top:26px;
-    font-size:.78rem;
-    color:var(--text-faint);
-  }
-  .footer-bottom .pill{
-    display:inline-flex;align-items:center;gap:6px;
-    color:var(--text-faint);
-  }
-  .footer-bottom .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .external-card .ext-btn:hover{filter:brightness(1.08);}
+  .external-card .ext-btn:active{transform:scale(.97);}
 
   /* ---------- Responsive ---------- */
   @media (max-width:1024px){
     .player-container{padding:26px 26px 18px;}
-    .view-meta{padding:18px 26px 22px;}
-    .site-footer{padding:32px 26px 24px;}
-    .footer-bottom{padding:18px 26px 0;}
+    .view-meta{padding:18px 26px 26px;}
   }
 
   @media (max-width:860px){
@@ -430,11 +411,13 @@
   @media (max-width:640px){
     .player-container{padding:16px 16px 14px;}
     .video-wrap{border-radius:var(--radius-md);}
-    .view-meta{padding:14px 18px 20px;flex-direction:column;align-items:flex-start;}
+    .view-meta{
+      padding:14px 18px calc(28px + env(safe-area-inset-bottom));
+      flex-direction:column;align-items:flex-start;
+    }
     .status-badge{align-self:flex-start;}
-    .site-footer{padding:28px 18px 22px;flex-direction:column;gap:24px;}
-    .footer-cols{gap:32px;}
-    .footer-bottom{padding:16px 18px 0;flex-direction:column;align-items:flex-start;gap:8px;}
+    .external-card{padding:24px;}
+    .external-card .ext-logo{width:52px;height:52px;}
   }
 </style>
 </head>
@@ -445,7 +428,7 @@
     <button class="icon-btn" id="openDrawer" aria-label="Open channel list">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="brand">Channels<span>Plus</span></div>
+    <div class="brand">ChannelsPlus</div>
     <div style="width:38px;"></div>
   </div>
 
@@ -453,7 +436,7 @@
 
   <div class="sidebar" id="sidebar">
     <div class="brand">
-      Channels<span>Plus</span>
+      ChannelsPlus
       <button class="close-drawer" id="closeDrawer" aria-label="Close channel list">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -470,11 +453,20 @@
   <div class="main-content">
     <div class="player-container">
       <div class="video-wrap">
-        <div class="live-badge"><span class="dot"></span>LIVE</div>
+        <div class="live-badge" id="liveBadge"><span class="dot"></span>LIVE</div>
         <video id="videoPlayer" controls autoplay muted playsinline></video>
         <div class="player-placeholder" id="playerPlaceholder">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
           <span>Choose a channel to start watching</span>
+        </div>
+        <div class="external-card" id="externalCard">
+          <div class="ext-logo" id="extLogo"></div>
+          <h3 id="extName"></h3>
+          <p>This channel is only available on its official site. Open it there to watch — it won't play inside this page.</p>
+          <a class="ext-btn" id="extBtn" href="#" target="_blank" rel="noopener noreferrer">
+            Open official stream
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+          </a>
         </div>
       </div>
     </div>
@@ -487,52 +479,32 @@
         <div class="status-dot"></div><span id="statusText">Proxy Routing Active</span>
       </div>
     </div>
-
-    <footer class="site-footer">
-      <div class="footer-brand">
-        <div class="fb-title">Channels<span>Plus</span></div>
-        <p>A single, clean home for every stream you follow — organized by category, searchable in a click, and built to stay out of your way.</p>
-      </div>
-      <div class="footer-cols">
-        <div class="footer-col">
-          <h5>Product</h5>
-          <ul>
-            <li><a href="#">Browse channels</a></li>
-            <li><a href="#">What's on now</a></li>
-            <li><a href="#">Playback settings</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Support</h5>
-          <ul>
-            <li><a href="#">Help center</a></li>
-            <li><a href="#">Report a stream</a></li>
-            <li><a href="#">Contact us</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Legal</h5>
-          <ul>
-            <li><a href="#">Terms of use</a></li>
-            <li><a href="#">Privacy policy</a></li>
-          </ul>
-        </div>
-      </div>
-    </footer>
-    <div class="footer-bottom">
-      <span>© 2026 Channels Plus. All rights reserved.</span>
-      <span class="pill"><span class="dot"></span>All systems operational</span>
-    </div>
   </div>
 
 <script>
   const video = document.getElementById('videoPlayer');
   const placeholder = document.getElementById('playerPlaceholder');
+  const liveBadge = document.getElementById('liveBadge');
+  const externalCard = document.getElementById('externalCard');
+  const extLogo = document.getElementById('extLogo');
+  const extName = document.getElementById('extName');
+  const extBtn = document.getElementById('extBtn');
   const statusText = document.getElementById('statusText');
   const statusBadge = document.getElementById('statusBadge');
   let hlsInstance = null;
   let allChannels = [];
   let collapsedCategories = new Set();
+
+  function setStatus(state, text) {
+    statusBadge.classList.remove('status-connecting', 'status-error', 'status-external');
+    if (state) statusBadge.classList.add(`status-${state}`);
+    statusText.textContent = text;
+    liveBadge.classList.toggle('show', state === 'live');
+  }
+
+  function isExternalChannel(chan) {
+    return chan.external === true || (chan.category || '').toLowerCase().includes('external');
+  }
 
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -642,30 +614,47 @@
 
     document.getElementById('currentChannelTitle').innerText = channel.name;
     document.getElementById('currentChannelCategory').innerText = `Category: ${channel.category}`;
+
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    video.removeAttribute('src');
+    video.pause();
+
+    if (isExternalChannel(channel)) {
+      placeholder.style.display = 'none';
+      externalCard.classList.add('show');
+      const link = channel.url || channel.link || '#';
+      extName.textContent = channel.name;
+      extBtn.href = link;
+      extLogo.innerHTML = channel.logo
+        ? `<img src="${channel.logo}" alt="${channel.name} logo" onerror="this.parentElement.textContent='${initials(channel.name)}'">`
+        : initials(channel.name);
+      setStatus('external', 'Official site link');
+      return;
+    }
+
+    externalCard.classList.remove('show');
     placeholder.style.display = 'none';
-    statusText.textContent = 'Connecting…';
-    statusBadge.style.color = 'var(--text-secondary)';
+    setStatus('connecting', 'Connecting…');
 
     let proxyUrl = `/proxy?url=${encodeURIComponent(channel.url)}`;
     if (channel.referer) proxyUrl += `&referer=${encodeURIComponent(channel.referer)}`;
 
     if (Hls.isSupported()) {
-      if (hlsInstance) hlsInstance.destroy();
       hlsInstance = new Hls({ maxBufferLength: 10, liveDurationInfinity: true });
       hlsInstance.loadSource(proxyUrl);
       hlsInstance.attachMedia(video);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
-        statusText.textContent = 'Proxy Routing Active';
+        setStatus('live', 'Proxy Routing Active');
       });
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) statusText.textContent = 'Stream error';
+        if (data.fatal) setStatus('error', 'Stream error');
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = proxyUrl;
       video.addEventListener('loadedmetadata', () => {
         video.play();
-        statusText.textContent = 'Proxy Routing Active';
+        setStatus('live', 'Proxy Routing Active');
       });
     }
   }
