@@ -1,1 +1,5 @@
-# Live
+services:
+  - type: web
+    name: my-live-app
+    env: docker
+    dockerfilePath: ./Dockerfile
